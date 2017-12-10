@@ -1,4 +1,4 @@
 # Linear-Regression-Models
-Project/Homework of Linear Regression Models @Columbia
+Project/Homework of Linear Regression Models with R @Columbia
 
-All work is coded in R
+
