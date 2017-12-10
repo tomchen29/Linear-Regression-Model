@@ -1,0 +1,225 @@
+---
+title: "GR5205 HW5 - Model Selection and Outlier Analysis"
+author: "TONGHONG CHEN || tc2894"
+date: "December 7, 2017"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1
+
+### (a)(5p) Obtain the scatter plot matrix, and the correlation matrix of the X variables. What do the scatter plots suggest about the nature of the functional relationship between the response variable Y and each of the predictor variables? Are any serious multi-collinearity problems evident? Explain.
+```{r}
+full=read.table("Homework_data_5_Problem1and2.txt",head=FALSE, col.names = c('Y','X1','X2', 'X3','X4'))
+
+plot(full)
+```
+
+```{r}
+cor(full)
+```
+
+From the scatter plot, X3 and X4 tends to have significant linear relationship with Y, while X2 has slight linear relationship with Y and X1 has insignificant linear relationship with Y. 
+
+However, X3 tends to have significant linear relationship with X4. Thus there is a serious multicolinearlity problem.
+
+The correlation matrix has further strengthened my conclusion, since the correlation between Y and X3, Y and X4 are larger than 0.85. And meanwhile, the correlation between X3 and X4 is larger than 0.78
+
+
+### (b)(5p) Fit the multiple regression function containing all four predictor variables as ﬁrst-order terms. Does it appear that all predictor variables should be retained?
+
+
+```{r}
+Y=full$Y
+X1=full$X1
+X2=full$X2
+X3=full$X3
+X4=full$X4
+
+regr = lm(Y~X1+X2+X3+X4)
+regr
+```
+
+Y hat= -124.38182 + 0.29573X1 + 0.04829X2+1.30601X3+0.51982X4
+
+While the four predictor variables are in the similar scale, the coefficient of X2 is only 0.04829 (very close to 0). Therefore, it might not be reasonable to retain all the variables.
+
+### (c)(10p) Using only ﬁrst-order terms for the predictor variables in the pool of potential X variables, ﬁnd the four best subset regression models according to the adjusted R2 criterion.
+
+```{r}
+summary(lm(Y~X1))$adj.r.squared 
+summary(lm(Y~X1+X2))$adj.r.squared 
+summary(lm(Y~X1+X3))$adj.r.squared 
+summary(lm(Y~X1+X4))$adj.r.squared 
+summary(lm(Y~X1+X2+X3))$adj.r.squared 
+summary(lm(Y~X1+X2+X4))$adj.r.squared 
+summary(lm(Y~X1+X3+X4))$adj.r.squared 
+summary(lm(Y~X1+X2+X3+X4))$adj.r.squared 
+summary(lm(Y~X2+X3))$adj.r.squared 
+summary(lm(Y~X2+X4))$adj.r.squared 
+summary(lm(Y~X2+X3+X4))$adj.r.squared 
+summary(lm(Y~X3+X4))$adj.r.squared 
+```
+
+Based on the adjusted R^2, the four best subset regression models are:
+
+```{r}
+lm(Y~X1+X3+X4)
+lm(Y~X1+X2+X3+X4)
+lm(Y~X1+X3)
+lm(Y~X1+X2+X3)
+```
+
+### d)(10p) Using forward stepwise regression ﬁnd the best subset of predictor variables to predict job proﬁciency. Use α limits of 0.05 and 0.10 for adding or deleting a variable, respectively (see Lecture 11, slides 11-12).
+
+```{r}
+library(MASS)
+Null = lm(Y ~ 1)
+addterm(Null, scope = regr, test="F")
+```
+
+```{r}
+NewMod = update( Null, .~. + X3)
+addterm( NewMod, scope = regr, test="F" )
+```
+
+```{r}
+NewMod = update( NewMod, .~. + X1)
+addterm( NewMod, scope = regr, test="F" )
+```
+
+```{r}
+NewMod = update( NewMod, .~. + X4)
+addterm( NewMod, scope = regr, test="F" )
+```
+
+After forward stepwise regression, we choose the following model as the best subset model:
+```{r}
+lm(Y~X1+X3+X4)
+```
+
+### (e)(5p) How does the best subset according to forward stepwise regression compare with the best subset according to the adjusted R2 criterion from (c) above?
+
+The model chosen by the forward stepwise regression is the same of the one chosen by the criteria of adjusted R^2.
+
+
+## Problem 2
+
+### (a)(5p) Obtain the residuals and plot them separately against Y, each of the four predictor variables, and the cross-product term X1X3. On the basis of these plots, should any modiﬁcations in the regression model be investigated?
+
+```{r}
+regr1 = lm(Y~X1)
+plot(regr1$fitted.values, regr1$residuals, main="Y hat v.s. Residuals - Model Y ~ X1", xlab="Y hat", ylab="residuals")
+abline(0,0, col = "purple")
+```
+```{r}
+regr2 = lm(Y~X2)
+plot(regr2$fitted.values, regr2$residuals, main="Y hat v.s. Residuals - Model Y ~ X2", xlab="Y hat", ylab="residuals")
+abline(0,0, col = "purple")
+```
+```{r}
+regr3 = lm(Y~X3)
+plot(regr3$fitted.values, regr3$residuals, main="Y hat v.s. Residuals - Model Y ~ X3", xlab="Y hat", ylab="residuals")
+abline(0,0, col = "purple")
+```
+```{r}
+regr4 = lm(Y~X4)
+plot(regr4$fitted.values, regr4$residuals, main="Y hat v.s. Residuals - Model Y ~ X4", xlab="Y hat", ylab="residuals")
+abline(0,0, col = "purple")
+```
+```{r}
+regr13 = lm(Y~X1*X3)
+plot(regr13$fitted.values, regr13$residuals, main="Y hat v.s. Residuals - Model Y ~ X1*X3", xlab="Y hat", ylab="residuals")
+abline(0,0, col = "purple")
+```
+
+Since none of the residual plots above show significant autocorrelation between the residuals, no modification is needed.
+
+
+### (b)(10p) Prepare separate added-variable plots against e (X1 | X3) and e (X3 | X1). Do these plots suggest that any modiﬁcations in the model form are warranted?
+
+```{r}
+library(car)
+avPlots(lm(Y~X1+X3))
+```
+
+In the above graphs, the "others" in the first graph means "X3", while the "others" in the first graph means "X1". 
+
+Since the slope of the red line is equal to the estimate of the coefficient of the added variable in the full model, the plots suggest that we should include both X1 and X3 in the regression model, which probably helps improve the model accuracy.
+
+### (c)(10p) Prepare a normal probability plot of the residuals. Also obtain the coeﬃcient of correlation between the ordered residuals and their expected values under normality. Test the reasonableness of the normality assumptions, using α = 0.1. What do you conclude?
+
+The question does not specify the model we are going to plot the normal porbability plot, so I suppose it's Y~X1+X3. The approach for other models should be the same as below:
+
+```{r}
+regr1_3 = lm(Y~X1+X3)
+qqp = qqnorm(regr1_3$residuals)
+```
+
+The coeﬃcient of correlation between the ordered residuals in the plot and their expected values under normality is:
+```{r}
+cor(qqp$x, qqp$y)
+```
+
+From appendix table B.6 of the textbook, given level of significance of 10%, the critical value of t test with d.f.=26 is 0.967. Since 0.98 > 0.967, we conclude that the assumption of normality appears reasonable.
+
+
+### (d)(10p) Obtain the studentized deleted residuals and identify any outlying Y observations. Use the Bonferroni outlier test (a t-test with t (1 − α/(2N), N − P − 1) critical value) with α = 0.05. State the decision rule and conclusion.
+```{r}
+studentized_resid = rstudent(regr1_3)
+studentized_resid
+```
+
+```{r}
+n=25
+p=3
+ifelse(abs(studentized_resid) > qt(p=1-0.05/(2*n),df=n-p-1), "outlier", "Non-outlier") 
+```
+
+From the above result, observation 16 of Y has the highest studnetized residual. Given 5% level of significance, for model Y~X1+X3, we do not reject the hypothesis that any point is an outlier by using Bonferroni outlier test.
+
+
+### (e)(10p) Obtain the diagonal elements of the hat matrix. Using the rule of thumb (Xi is outlying case with regard to the X values, if hii > 2P/N), identify any outlying X observations.
+```{r}
+hat_value = hatvalues(regr1_3)
+hat_value
+```
+
+```{r}
+ifelse(hat_value > 2*p/n, "outlier", "Non-outlier") 
+```
+
+From rule of thumb, observation 7 and 18 of X seem to be outliers.
+
+
+### (f)(10p) Case 7 and 18 appear to be moderately outlying with respect to their X values, and case 16 is reasonably far outlying with respect to its Y value. Obtain DF FITS, DFBETAS, and Cook’s distance values for these cases to asses their inﬂuence. What do you conclude?
+
+
+```{r}
+dfbetas_table = dfbetas(regr1_3)
+influence_table = cbind(
+  "DFFITS"  = dffits(regr1_3),
+  "DFBETA_Intercept" = dfbetas_table[,1],
+  "DFBETA_X1" = dfbetas_table[,2],
+  "DFBETA_X3" = dfbetas_table[,3],
+  "Cook's Dist." = cooks.distance(regr1_3))
+
+influence_table[c(7,18,16),]
+```
+
+From the above table, none of the absolute value is larger than 1. Though observation 18 has DFFITS close to 1
+
+Based on this result, we conclude that there is no outlier for model Y~X1+X3
+
+
+### (g)(10p) Obtain the variance inﬂation factors. What do they indicate?
+
+```{r}
+library(car)
+vif(regr1_3)
+```
+
+The VIF for X1 and X3 is relative small (<10), therefore we counclude that there is no multicollinearity.
+
