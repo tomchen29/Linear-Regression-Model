@@ -1,0 +1,221 @@
+---
+title: "GR5205 HW4 - Residual Analysis and Lack-of-Fit Test"
+author: "TONGHONG CHEN || tc2894"
+date: "November 7, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1
+
+### (a) Obtain the scatter plot matrix and the correlation matrix. Interpret these and state your principal ﬁndings.
+```{r}
+full=read.table("Homework_4_data_Problem1.txt",head=FALSE, col.names = c('Y','X1','X2', 'X3','X4'))
+
+plot(full)
+```
+```{r}
+cor(full)
+```
+
+From the above scatter plot matrix, there seems to be a strong linear relation between Y and X4, Y and X2. These insights are also proved by the correlation matrix. On the other hand, X1 seems to have a weak linear relation with Y, while X3 does not have significant linear relation with Y.
+
+
+### (b)Fit regression model
+Yi = β0 + β1Xi1 + β2Xi2 + β3Xi3 + β4Xi4 + εi,
+
+for four predictor variables to the data and state the estimated regression function.
+
+```{r}
+Y=full$Y
+X1=full$X1
+X2=full$X2
+X3=full$X3
+X4=full$X4
+
+regr = lm(Y~X1+X2+X3+X4)
+regr
+```
+
+Y hat= 12.20 + -0.142X1 + 0.282X2+0.6193X3+0.000007924X4
+
+### (c) Obtain the residuals and prepare a box plot of the residuals. Does the distribution appear to be fairly symmetrical?
+
+```{r}
+residuals = resid(regr)
+boxplot(residuals)
+```
+
+The above boxplot suggests that the distribution of residuals is approximately symmetric, with a few outliers.
+k
+
+### d) Plot the residuals against Y , each predictor variable, and each two-factor interaction term on separate graphs. Also prepare a normal probability plot. Analyse your plots and summarize your ﬁndings.
+```{r}
+plot(regr$fitted.values, regr$residuals, main="Y hat v.s. Residuals", xlab="Y hat", ylab="residuals")
+```
+```{r}
+plot(X1, regr$residuals, main="X1 v.s. Residuals", xlab="X1", ylab="residuals")
+```
+```{r}
+plot(X2, regr$residuals, main="X2 v.s. Residuals", xlab="X2", ylab="residuals")
+```
+```{r}
+plot(X3, regr$residuals, main="X3 v.s. Residuals", xlab="X3", ylab="residuals")
+```
+```{r}
+plot(X4, regr$residuals, main="X4 v.s. Residuals", xlab="X4", ylab="residuals")
+```
+```{r}
+plot(X1*X2,regr$residuals, main="X1X2 v.s. Residuals", xlab="X1X2", ylab="residuals")
+```
+```{r}
+plot(X1*X3,regr$residuals, main="X1X3 v.s. Residuals", xlab="X1X3", ylab="residuals")
+```
+```{r}
+plot(X1*X4,regr$residuals, main="X1X4 v.s. Residuals", xlab="X1X4", ylab="residuals")
+```
+```{r}
+plot(X2*X3,regr$residuals, main="X2X3 v.s. Residuals", xlab="X2X3", ylab="residuals")
+```
+```{r}
+plot(X2*X4,regr$residuals, main="X2X4 v.s. Residuals", xlab="X2X4", ylab="residuals")
+```
+```{r}
+plot(X3*X4,regr$residuals, main="X3X4 v.s. Residuals", xlab="X3X4", ylab="residuals")
+```
+
+```{r}
+qqnorm(regr$residuals)
+abline(0,1,col="red")
+```
+
+The point in the residuals against fitted values plot seems to be normally distributed around 0, which indicates a good fit of linear regression model. The points in most of other polots also tend to be normally distributed around 0.
+
+The Q-Q plot is lightly tailed, which could be a problem but generally ok.
+
+
+### (e)(5p) Can you conduct a formal test for lack of ﬁt here?
+```{r}
+summary(regr)
+```
+Since the F-Statistics is pretty large, and the p-value of F-Statistics is very small. we reject Ho: B1=B2=B3=B4=0
+
+
+### f)(10p) The commercial real estate company obtained information about additional three properties. Find separate prediction intervals for the rental rates for each of the new properties. Use 95% conﬁdence coeﬃcient in each case. Can the rental rates of these three properties be predicted fairly precisely? What is the family conﬁdence level for the set of three predictions?
+```{r}
+predict(regr, data.frame(X1=c(4,6,12), X2=c(10,11.5,12.5), X3=c(0.1,0,0.32), X4=c(80000,120000,340000)), interval="prediction")
+```
+
+Since the interval is relatively width, it is hard to tell the rental rates can be predicted fairly precisely.
+
+The family confidence level is 0.95^3=0.857. 
+
+### (g)(10p) Obtain the analysis of variance table that decomposes the regression sum of squares into extra sums of squares associated with X4; with X1 given X4; with X2 given X1 and X4; and with X3, given X1, X2 and X4.
+
+```{r}
+new_model = lm(Y~X4+X1+X2+X3)
+anova(new_model)
+
+```
+From the table above, we can conclude:
+SSR(X4)=67.775, 
+
+SSR(X1|X4)=42.275, 
+
+SSR(X2|X1,X4)=27.857, 
+
+SSR(X3|X2,X1,X4)=0.420
+
+
+### (h)(5p) Test whether X3 can be dropped from the regression model given that X1, X2, and X4 are retained. Use the F ∗ test statistic and level of signiﬁcance 0.01. State the alternatives decision rule, and conclusion. What is the p-value of the test?
+
+```{r}
+regr_without_x3=lm(Y~X1+X2+X4)
+anova(regr,regr_without_x3)
+```
+Ho: B3 = 0
+H1: B3 != 0
+
+From the table above, we can see the p-value of F-Statistics， which is 0.5704, is much larger than 0.01. Therefore, we reject Ho: B3 = 0.
+
+As a result, X3 cannot be dropped from the regression model.
+
+
+## Problem 2
+
+### (a)(5p) Explain the meaning of all regression coeﬃcients in the model.
+
+Yi = β0 + β1Xi1 + β2Xi2 + εi
+β0: the estimated value of number of minutes spent on the service call when 0 of copy serviced and large commercial copier;
+β1: The marginal increase (decrease) of number of copies serviced given other variables fixed;
+β2: The marginal increase (decrease) of small copy model given other variables fixed;
+
+
+### (b)(5p) Fit the regression model and state the estimated regression function.
+```{r}
+full=read.table("Homework_4_data_Problem2.txt",head=FALSE, col.names = c('Y','X1','X2'))
+Y=full$Y
+X1=full$X1
+X2=full$X2
+regr = lm(Y~X1+X2)
+regr
+```
+
+Y hat= -0.9225 + 15.0461X1 + 0.7587X2
+
+### (c)(5p) Estimate the effect of copier model on mean service time with a 95 percent confidence interval. Interpret your interval estimate.
+
+```{r}
+confint(regr,level=0.95)
+```
+
+The effect of copier model on mean service time is 0.7587 (from question b.), with a 95% Confidence interval (-4.851254, 6.368698). 
+
+
+### (d)(10p) Why would the analyst wish to include X1, number of copiers, in the regression model when interest is in estimating the eﬀect of type of copier model on service time?
+```{r}
+regr_without_X1=lm(Y~X2)
+summary(regr_without_X1)
+```
+```{r}
+anova(regr, regr_without_X1)
+```
+
+The above result conclude that if we only fit the model with X2, then the p-value of B2 in Y=B0+B2*X2 is very large, indicating that its not a good model. On the other hand, the F-Test also suggest to include X1 in the linear regression model.
+
+Therefore, the analyst need to include X1 to get more percisely prediction.
+
+### (e)(10p) Obtain the residuals and plot them against X1X2. Is there any indication that an interaction term in the regression model would be helpful?
+```{r}
+plot(X1*X2, regr$residuals, main="X1X2 v.s. Residuals", xlab="X1*X2", ylab="residuals")
+```
+
+Since the data points seem to be normally distributed around 0, X1*X2 may be helpful.
+
+
+### (f)(5p) Fit regression model with interaction term as an additional explanatory variable, i.e., Yi = β0 + β1Xi1 + β2Xi2 + β3Xi1Xi2 + εi
+
+```{r}
+regr2=lm(Y~X1+X2+X1*X2)
+regr2
+```
+
+### (g)(10p) Test whether the interaction term can be dropped from the model; control the α risk at 0.10. State the alternatives, decision rule, and conclusion. What is the p-value of the test? If the interaction cannot be dropped from the model, describe the nature of the interaction eﬀect.
+
+```{r}
+anova(regr2, regr)
+```
+H0: coefficient of X1*X2 = 0
+
+H1: coefficient of X1*X2 != 0
+
+decision rule: accept H0 if p-value >= 0.10; Otherwise reject H0
+
+Conclusion: Since the p-value is 0.07549 < 0.10, we do not reject H0. this means that given 10% confidence interval, we should include X1*X2 in our model
+
+Nature of interaction effect: the co-effect when a small copy model and a certain # of copiers serviced are presented together
+
+
